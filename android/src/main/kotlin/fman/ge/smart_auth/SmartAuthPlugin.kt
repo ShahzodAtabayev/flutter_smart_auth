@@ -4,10 +4,10 @@ import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.app.PendingIntent
 import android.content.*
-import android.content.ContentValues.TAG
 import android.net.Uri
 import android.util.Log
 import androidx.core.app.ActivityCompat.startIntentSenderForResult
+import androidx.core.content.ContextCompat
 import com.google.android.gms.auth.api.credentials.*
 import com.google.android.gms.auth.api.credentials.HintRequest.Builder
 import com.google.android.gms.auth.api.phone.SmsRetriever
@@ -235,15 +235,35 @@ class SmartAuthPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     private fun startSmsRetriever(result: MethodChannel.Result) {
-        unregisterAllReceivers();
+        unregisterAllReceivers()
         pendingResult = result
         smsReceiver = SmsBroadcastReceiver()
-        mContext.registerReceiver(
+//        mContext.registerReceiver(
+//            smsReceiver,
+//            IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION),
+//            SmsRetriever.SEND_PERMISSION,
+//            null,
+//
+//            )
+
+        // Register receiver that may finish this Activity.
+//        ContextCompat.registerReceiver(
+//            mContext,
+//            smsReceiver,
+//            IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION),
+//            ContextCompat.RECEIVER_EXPORTED
+//        )
+
+        val intentFilter = IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION)
+        ContextCompat.registerReceiver(
+            mContext,
             smsReceiver,
-            IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION),
+            intentFilter,
             SmsRetriever.SEND_PERMISSION,
             null,
+            ContextCompat.RECEIVER_EXPORTED
         )
+
         SmsRetriever.getClient(mContext).startSmsRetriever()
     }
 
@@ -364,8 +384,8 @@ class SmartAuthPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     private fun unregisterAllReceivers() {
-        removeSmsRetrieverListener();
-        removeSmsUserConsentListener();
+        removeSmsRetrieverListener()
+        removeSmsUserConsentListener()
     }
 
 
@@ -423,6 +443,7 @@ class SmartAuthPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                                 ignoreIllegalState { pendingResult?.success(null) }
                             }
                         }
+
                         CommonStatusCodes.TIMEOUT -> {
                             Log.e(
                                 PLUGIN_TAG,
@@ -430,6 +451,7 @@ class SmartAuthPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                             )
                             ignoreIllegalState { pendingResult?.success(null) }
                         }
+
                         else -> {
                             Log.e(
                                 PLUGIN_TAG,
@@ -482,10 +504,12 @@ class SmartAuthPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                                 ignoreIllegalState { pendingResult?.success(null) }
                             }
                         }
+
                         CommonStatusCodes.TIMEOUT -> {
                             Log.e(PLUGIN_TAG, "ConsentBroadcastReceiver Timeout")
                             ignoreIllegalState { pendingResult?.success(null) }
                         }
+
                         else -> {
                             Log.e(
                                 PLUGIN_TAG,
